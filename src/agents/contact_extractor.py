@@ -29,6 +29,7 @@ def extract_contacts_from_text(
     model_primary: str = "gpt-4o-mini",
     model_fallback: str = "gpt-3.5-turbo"
 ) -> List[dict]:
+    print("🔥 OPENAI CALLED")
     system = (
         "Ты — ассистент для извлечения контактов сотрудников/руководства из текста страниц. "
         "Нельзя выдумывать данные. Извлекай только то, что явно написано в тексте. "
