@@ -16,7 +16,7 @@ def _get_project_root() -> str:
 
 def _get_db() -> firestore.Client:
     if not firebase_admin._apps:
-        json_path = os.path.join(_get_project_root(), "firebase-admin-sdk.json")
+        json_path = "/etc/secrets/firebase-admin-sdk.json"
         print(f"[DEBUG] Loading Firebase key from: {json_path}")
         if not os.path.exists(json_path):
             raise FileNotFoundError(f"Service account key not found at {json_path}")
