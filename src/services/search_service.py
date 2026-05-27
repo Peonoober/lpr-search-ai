@@ -97,8 +97,6 @@ def start_lpr_search(order_id: str):
         queries = [
             base_query,
             f'{company_hint} руководство контакты email phone {region}',
-            f'{company_hint} ректорат руководство email {region}',
-            f'{company_hint} администрация "@" {region}',
         ]
 
         all_contacts: List[Dict[str, Any]] = []
@@ -110,10 +108,10 @@ def start_lpr_search(order_id: str):
                     company_hint=company_hint,
                     domain=industry,
                     region=region,
-                    max_urls=20,
-                    max_results_search=35,
+                    max_urls=6,
+                    max_results_search=12,
                     llm_fallback=True,
-                    llm_max_contacts_per_page=25,
+                    llm_max_contacts_per_page=8,
                 )
                 print(f"[PART] {len(res)} contacts")
                 all_contacts.extend(res)
