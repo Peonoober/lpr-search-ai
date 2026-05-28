@@ -24,35 +24,67 @@ def run_pipeline(
     llm_fallback: bool = True,
     llm_max_contacts_per_page: int = 25,
 ) -> List[Dict]:
+
     results = ddg_search_ranked(query, max_results=max_results_search)
     urls = [r["url"] for r in results if r.get("url")][:max_urls]
 
     all_contacts: List[Dict] = []
 
+    # ✅ Сохраняем тексты страниц, чтобы потом (опционально) скормить LLM
+    pages_for_llm: List[Dict] = []
+
+    # === ЭТАП 1: ПОЛНЫЙ ЛОКАЛЬНЫЙ ПАРСИНГ (без LLM) ===
     for url in urls:
         try:
             html = fetch_html(url)
             text = html_to_text(html)
 
-            u_low = url.lower()
-            is_managers_like = any(x in u_low for x in [
-                "/sveden/managers", "/managers", "/rukovod", "/management",
-                "/sveden/struct", "/employees", "/staff", "/team", "/persons"
-            ])
-
             candidate_short = extract_candidate_lines(text)
             email_windows = extract_email_windows(text, window_lines=8, max_blocks=120)
 
-            local_contacts = parse_contacts_simple(candidate_short, company=company_hint, source_url=url)
+            local_contacts = parse_contacts_simple(
+                candidate_short,
+                company=company_hint,
+                source_url=url,
+            )
+
             if local_contacts:
                 all_contacts.extend(local_contacts)
 
-            if llm_fallback:
+            # Сохраняем данные для возможного LLM-этапа
+            pages_for_llm.append({
+                "url": url,
+                "candidate_short": candidate_short,
+                "email_windows": email_windows,
+                "text_head": text[:9000],
+            })
+
+        except Exception:
+            continue
+
+    # === ЭТАП 2: LLM (ОПЦИОНАЛЬНО, ПОСЛЕ ЛОКАЛЬНОГО ПАРСИНГА) ===
+    if llm_fallback:
+        for page in pages_for_llm:
+            try:
+                url = page["url"]
+                u_low = url.lower()
+
+                is_managers_like = any(x in u_low for x in [
+                    "/sveden/managers", "/managers", "/rukovod", "/management",
+                    "/sveden/struct", "/employees", "/staff", "/team", "/persons"
+                ])
+
                 if is_managers_like:
-                    head = text[:9000]
-                    llm_input = (email_windows + "\n\n==== PAGE_HEAD ====\n\n" + head).strip()
+                    llm_input = (
+                        page["email_windows"]
+                        + "\n\n==== PAGE_HEAD ====\n\n"
+                        + page["text_head"]
+                    ).strip()
                 else:
-                    llm_input = candidate_short
+                    llm_input = page["candidate_short"]
+
+                if not llm_input.strip():
+                    continue
 
                 llm_contacts = extract_contacts_from_text(
                     text=llm_input,
@@ -60,6 +92,7 @@ def run_pipeline(
                     region=region or "",
                     max_contacts=llm_max_contacts_per_page,
                 )
+
                 for c in llm_contacts:
                     all_contacts.append({
                         "full_name": (c.get("full_name") or "").strip(),
@@ -70,9 +103,12 @@ def run_pipeline(
                         "source_url": url,
                     })
 
-        except Exception:
-            continue
+            except Exception as e:
+                # ✅ LLM упал — игнорируем, не ломаем процесс
+                print(f"[LLM SKIP] {e}")
+                continue
 
+    # === ДЕДУПЛИКАЦИЯ ===
     uniq = {}
     for c in all_contacts:
         email = (c.get("email") or "").lower().strip()

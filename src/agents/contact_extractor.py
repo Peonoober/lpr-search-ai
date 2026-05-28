@@ -7,10 +7,15 @@ from openai import OpenAI
 load_dotenv()
 
 API_KEY = os.getenv("OPENAI_API_KEY")
-if not API_KEY:
-    raise RuntimeError("OPENAI_API_KEY не найден. Проверь файл .env в корне проекта.")
 
-client = OpenAI(api_key=API_KEY)
+# ✅ Не падаем, если ключа нет
+client = None
+if API_KEY:
+    try:
+        client = OpenAI(api_key=API_KEY)
+    except Exception as e:
+        print(f"[OPENAI INIT ERROR] {e}")
+        client = None
 
 
 def _strip_code_fences(s: str) -> str:
@@ -29,6 +34,11 @@ def extract_contacts_from_text(
     model_primary: str = "gpt-4o-mini",
     model_fallback: str = "gpt-3.5-turbo"
 ) -> List[dict]:
+
+    # ✅ Если OpenAI недоступен — просто возвращаем пусто
+    if client is None:
+        print("[LLM DISABLED] No OpenAI client")
+        return []
     print("🔥 OPENAI CALLED")
     system = (
         "Ты — ассистент для извлечения контактов сотрудников/руководства из текста страниц. "
