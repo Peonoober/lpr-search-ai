@@ -6,53 +6,17 @@ PHONE_RE = re.compile(
     r"(\+7|8)\s*\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2}"
 )
 
-BAD_POSITION_WORDS = ["контакт", "телефон", "e-mail", "email"]
-
-
-def _looks_like_email(s: str) -> bool:
-    return bool(EMAIL_RE.search(s or ""))
-
-
-def _looks_like_phone(s: str) -> bool:
-    return bool(PHONE_RE.search(s or ""))
-
-
-def _looks_like_position(s: str) -> bool:
-    if not s:
-        return False
-
-    low = s.lower()
-
-
-    if _looks_like_email(s):
-        return False
-
-
-    if _looks_like_phone(s):
-        return False
-
-
-    digits = sum(c.isdigit() for c in s)
-    if digits > 4:
-        return False
-
-
-    keywords = [
-        "директор", "генераль", "руковод", "ректор",
-        "проректор", "декан", "глав", "начальник",
-        "head", "ceo", "cto", "cmo"
-    ]
-
-    if any(k in low for k in keywords):
-        return True
-
-
-    return len(s) > 10
-
 NAME_RE = re.compile(
-    r"\b[А-ЯЁ][а-яё]{2,}\s+[А-ЯЁ][а-яё]{2,}(?:\s+[А-ЯЁ][а-яё]{2,})?\b"
+    r"\b[А-ЯЁ][а-яё]+\s+[А-ЯЁ][а-яё]+(?:\s+[А-ЯЁ][а-яё]+)?\b"
 )
-def parse_contacts_simple(lines_text: str, company: str, source_url: str) -> List[Dict]:
+
+
+def parse_contacts_simple(
+    lines_text: str,
+    company: str,
+    source_url: str
+) -> List[Dict]:
+
     lines = [ln.strip() for ln in lines_text.splitlines() if ln.strip()]
     contacts: List[Dict] = []
 
@@ -70,12 +34,6 @@ def parse_contacts_simple(lines_text: str, company: str, source_url: str) -> Lis
                 phone = m.group(0)
                 break
 
-        position = ""
-        for j in range(i - 3, i + 4):
-            if 0 <= j < len(lines) and _looks_like_position(lines[j]):
-                position = lines[j]
-                break
-
         full_name = ""
         for j in range(i - 3, i + 4):
             if 0 <= j < len(lines):
@@ -84,12 +42,9 @@ def parse_contacts_simple(lines_text: str, company: str, source_url: str) -> Lis
                     full_name = m.group(0)
                     break
 
-        if not full_name:
-            continue
-
         contacts.append({
             "full_name": full_name,
-            "position": position,
+            "position": "",
             "email": email,
             "phone": phone,
             "source_url": source_url,
@@ -98,4 +53,5 @@ def parse_contacts_simple(lines_text: str, company: str, source_url: str) -> Lis
     uniq = {}
     for c in contacts:
         uniq[c["email"]] = c
+
     return list(uniq.values())
