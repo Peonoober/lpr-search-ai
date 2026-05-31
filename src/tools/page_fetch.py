@@ -28,10 +28,10 @@ def html_to_text(html: str) -> str:
 def extract_candidate_lines(text: str, max_lines: int = 160) -> str:
     keywords = [
         "директор", "генеральный", "руковод", "ceo", "cto", "cmo", "coo",
-        "главный врач", "завед", "ректор", "проректор", "декан",
-        "head", "owner", "founder",
-        "правление", "руководство", "команда", "management", "leadership",
-        "контак", "email", "e-mail", "тел", "тел.", "phone"
+        "ректор", "проректор", "декан", "заведующий",
+        "главный врач", "head", "owner", "founder",
+        "правление", "руководство", "команда",
+        "контак", "email", "e-mail", "тел", "phone"
     ]
 
     lines = [ln.strip() for ln in text.splitlines() if ln.strip()]

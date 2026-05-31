@@ -85,10 +85,9 @@ def parse_contacts_simple(lines_text: str, company: str, source_url: str) -> Lis
         contacts.append({
             "full_name": full_name,
             "position": position,
-            "company": company,
             "email": email,
             "phone": phone,
-            "source_url": source_url
+            "source_url": source_url,
         })
 
     uniq = {}

@@ -28,12 +28,14 @@ def _get_db() -> firestore.Client:
 def _build_search_query(order_data: Dict[str, Any]) -> str:
     criteria = order_data.get("searchCriteria") or {}
 
-    company = (criteria.get("company") or "").strip()
     industry = (criteria.get("industry") or "").strip()
     region = (criteria.get("region") or "").strip()
     details = (criteria.get("details") or "").strip()
 
-    parts = []
+    parts: List[str] = []
+
+    if details:
+        parts.append(details)
 
     if industry:
         parts.append(industry)
@@ -41,11 +43,8 @@ def _build_search_query(order_data: Dict[str, Any]) -> str:
     if region:
         parts.append(region)
 
-    if details:
-        parts.append(details)
-
     parts.append(
-        '(руководство OR ректорат OR директор OR руководитель) (email OR e-mail OR контакты OR телефон)'
+        '(руководство OR директор OR ректор OR проректор OR декан OR заведующий OR начальник) (email OR e-mail OR контакты OR телефон)'
     )
 
     return " ".join(parts)
@@ -113,7 +112,7 @@ def start_lpr_search(order_id: str):
             region=region,
             max_urls=25,
             max_results_search=50,
-            llm_fallback=False,  # 🔥 LLM полностью отключён
+            llm_fallback=True,
         )
 
         print(f"[PART] {len(res)} contacts")
@@ -145,7 +144,6 @@ def start_lpr_search(order_id: str):
         doc_data = {
             "fullName": full_name,
             "position": position,
-            "company": company_hint,
             "email": email,
             "phone": phone,
             "sourceUrl": source,

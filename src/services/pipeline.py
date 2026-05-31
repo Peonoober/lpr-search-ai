@@ -30,10 +30,10 @@ def run_pipeline(
 
     all_contacts: List[Dict] = []
 
-    # ✅ Сохраняем тексты страниц, чтобы потом (опционально) скормить LLM
+
     pages_for_llm: List[Dict] = []
 
-    # === ЭТАП 1: ПОЛНЫЙ ЛОКАЛЬНЫЙ ПАРСИНГ (без LLM) ===
+
     for url in urls:
         try:
             html = fetch_html(url)
@@ -51,7 +51,7 @@ def run_pipeline(
             if local_contacts:
                 all_contacts.extend(local_contacts)
 
-            # Сохраняем данные для возможного LLM-этапа
+
             pages_for_llm.append({
                 "url": url,
                 "candidate_short": candidate_short,
@@ -62,7 +62,7 @@ def run_pipeline(
         except Exception:
             continue
 
-    # === ЭТАП 2: LLM (ОПЦИОНАЛЬНО, ПОСЛЕ ЛОКАЛЬНОГО ПАРСИНГА) ===
+
     if llm_fallback:
         for page in pages_for_llm:
             try:
@@ -97,18 +97,17 @@ def run_pipeline(
                     all_contacts.append({
                         "full_name": (c.get("full_name") or "").strip(),
                         "position": (c.get("position") or "").strip(),
-                        "company": (c.get("company") or company_hint or "").strip(),
                         "email": (c.get("email") or "").strip(),
                         "phone": (c.get("phone") or "").strip(),
                         "source_url": url,
                     })
 
             except Exception as e:
-                # ✅ LLM упал — игнорируем, не ломаем процесс
+
                 print(f"[LLM SKIP] {e}")
                 continue
 
-    # === ДЕДУПЛИКАЦИЯ ===
+
     uniq = {}
     for c in all_contacts:
         email = (c.get("email") or "").lower().strip()
