@@ -116,8 +116,8 @@ def start_lpr_search(order_id: str):
             company_hint=company_hint,
             domain=industry,
             region=region,
-            max_urls=15,
-            max_results_search=25,
+            max_urls=40,
+            max_results_search=150,
             llm_fallback=True,
         )
 
