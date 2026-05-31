@@ -49,7 +49,9 @@ def _looks_like_position(s: str) -> bool:
 
     return len(s) > 10
 
-NAME_RE = re.compile(r"[А-ЯЁ][а-яё]+(?:\s+[А-ЯЁ][а-яё]+){1,2}")
+NAME_RE = re.compile(
+    r"\b[А-ЯЁ][а-яё]{2,}\s+[А-ЯЁ][а-яё]{2,}(?:\s+[А-ЯЁ][а-яё]{2,})?\b"
+)
 def parse_contacts_simple(lines_text: str, company: str, source_url: str) -> List[Dict]:
     lines = [ln.strip() for ln in lines_text.splitlines() if ln.strip()]
     contacts: List[Dict] = []
@@ -81,6 +83,9 @@ def parse_contacts_simple(lines_text: str, company: str, source_url: str) -> Lis
                 if m:
                     full_name = m.group(0)
                     break
+
+        if not full_name:
+            continue
 
         contacts.append({
             "full_name": full_name,

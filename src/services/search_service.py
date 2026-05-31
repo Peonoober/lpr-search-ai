@@ -44,7 +44,9 @@ def _build_search_query(order_data: Dict[str, Any]) -> str:
         parts.append(region)
 
     parts.append(
-        '(руководство OR директор OR ректор OR проректор OR декан OR заведующий OR начальник) (email OR e-mail OR контакты OR телефон)'
+        '(site:.ru OR site:.edu OR site:.ac.ru) '
+        '(руководство OR ректорат OR ректор OR проректор OR декан) '
+        '(email OR контакты)'
     )
 
     return " ".join(parts)
@@ -62,6 +64,10 @@ def _dedup_contacts(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             continue
 
         if not email and not phone:
+            continue
+
+        bad_prefixes = ["info@", "hello@", "support@", "admin@", "office@", "contact@"]
+        if any(email.startswith(p) for p in bad_prefixes):
             continue
 
         key = email or phone
@@ -110,8 +116,8 @@ def start_lpr_search(order_id: str):
             company_hint=company_hint,
             domain=industry,
             region=region,
-            max_urls=25,
-            max_results_search=50,
+            max_urls=15,
+            max_results_search=25,
             llm_fallback=True,
         )
 
